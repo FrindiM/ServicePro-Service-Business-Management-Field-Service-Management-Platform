@@ -90,3 +90,16 @@ Set `APP_URL=http://127.0.0.1:8080` in `.env`.
 - Run `php tests/static_check.php` and `php bin/healthcheck.php`.
 
 See `docs/` for installation, deployment, admin, technician, customer-portal, database, API and testing guides.
+
+
+## License
+
+ServicePro is proprietary commercial software.
+
+Copyright © 2026 Frindi Mangimbulude. All Rights Reserved.
+
+The source code in this repository is provided for portfolio and evaluation purposes only.
+
+Unauthorized use, deployment, modification, redistribution, resale, sublicensing, or commercial exploitation is prohibited without prior written permission.
+
+See the [LICENSE](LICENSE) file for complete licensing terms.
