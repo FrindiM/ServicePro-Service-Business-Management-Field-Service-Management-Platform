@@ -1,0 +1,13 @@
+<?php
+namespace App\Controllers;
+use App\Core\{Controller,Database,Auth,Response};
+final class AssetController extends Controller {
+    public function qr(string $id):void{
+        if(!Auth::can('asset.view')){$this->forbidden();return;}$db=Database::connection();$t=(int)Auth::tenantId();$s=$db->prepare("SELECT a.*,c.name customer_name,cs.site_name FROM customer_assets a JOIN customers c ON c.id=a.customer_id AND c.tenant_id=a.tenant_id LEFT JOIN customer_sites cs ON cs.id=a.site_id AND cs.tenant_id=a.tenant_id WHERE a.id=? AND a.tenant_id=? AND a.deleted_at IS NULL");$s->execute([(int)$id,$t]);$asset=$s->fetch();if(!$asset){http_response_code(404);require BASE_PATH.'/app/Views/errors/404.php';return;}if(!$asset['public_token']){$token=bin2hex(random_bytes(20));$db->prepare("UPDATE customer_assets SET public_token=?,updated_at=NOW() WHERE id=? AND tenant_id=?")->execute([$token,(int)$id,$t]);$asset['public_token']=$token;}$this->view('assets/qr',['title'=>'Asset QR · '.$asset['asset_code'],'asset'=>$asset,'publicUrl'=>url('/a/'.$asset['public_token'])]);
+    }
+    public function publicDetail(string $token):void{
+        if(!preg_match('/^[a-f0-9]{40}$/',$token)){http_response_code(404);require BASE_PATH.'/app/Views/errors/404.php';return;}$db=Database::connection();$s=$db->prepare("SELECT a.*,c.name customer_name,cs.site_name,cs.address site_address,t.name tenant_name,t.logo,t.phone tenant_phone,t.email tenant_email FROM customer_assets a JOIN customers c ON c.id=a.customer_id AND c.tenant_id=a.tenant_id JOIN tenants t ON t.id=a.tenant_id LEFT JOIN customer_sites cs ON cs.id=a.site_id AND cs.tenant_id=a.tenant_id WHERE a.public_token=? AND a.deleted_at IS NULL AND t.status='active' LIMIT 1");$s->execute([$token]);$asset=$s->fetch();if(!$asset){http_response_code(404);require BASE_PATH.'/app/Views/errors/404.php';return;}$jobs=$db->prepare("SELECT job_number,service_category,status,completed_at,scheduled_date FROM jobs WHERE tenant_id=? AND asset_id=? AND deleted_at IS NULL ORDER BY id DESC LIMIT 20");$jobs->execute([$asset['tenant_id'],$asset['id']]);$w=$db->prepare("SELECT w.warranty_start,w.warranty_end,w.coverage,w.status,j.job_number FROM warranties w JOIN jobs j ON j.id=w.job_id AND j.tenant_id=w.tenant_id WHERE w.tenant_id=? AND j.asset_id=? ORDER BY w.warranty_end DESC LIMIT 5");$w->execute([$asset['tenant_id'],$asset['id']]);$this->publicView('assets/public',['asset'=>$asset,'jobs'=>$jobs->fetchAll(),'warranties'=>$w->fetchAll()]);
+    }
+    private function publicView(string $view,array $data):void{extract($data,EXTR_SKIP);require BASE_PATH.'/app/Views/'.$view.'.php';}
+    private function forbidden():void{http_response_code(403);require BASE_PATH.'/app/Views/errors/403.php';}
+}

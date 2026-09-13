@@ -1,0 +1,4 @@
+<div class="page-actions"><div><p class="mb-0">Print this QR label and attach it to the customer asset.</p></div><button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button></div>
+<div class="card-panel asset-qr-sheet"><div id="assetQr" data-value="<?= e($publicUrl) ?>"></div><h2><?= e($asset['asset_code']) ?></h2><p><?= e(trim(($asset['brand']??'').' '.($asset['model']??''))) ?></p><strong><?= e($asset['customer_name']) ?></strong><small><?= e($asset['site_name']??'') ?></small><code><?= e($publicUrl) ?></code></div>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('assetQr');if(window.QRCode&&el)new QRCode(el,{text:el.dataset.value,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});});</script>

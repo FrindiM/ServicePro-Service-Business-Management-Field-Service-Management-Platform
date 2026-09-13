@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+define('BASE_PATH',dirname(__DIR__));
+$errors=[];$phpFiles=[];$it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator(BASE_PATH,FilesystemIterator::SKIP_DOTS));foreach($it as $f){$path=$f->getPathname();if($f->isFile()&&$f->getExtension()==='php'&&!str_contains($path,DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR))$phpFiles[]=$path;}
+foreach($phpFiles as $file){$out=[];$code=0;exec('php -l '.escapeshellarg($file).' 2>&1',$out,$code);if($code!==0)$errors[]="Syntax: {$file}: ".implode(' ',$out);}
+$schema=file_get_contents(BASE_PATH.'/database/schema.sql');preg_match_all('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i',$schema,$m);$tables=$m[1]??[];if(count($tables)!==count(array_unique($tables)))$errors[]='Duplicate table name in schema.';
+$required=['tenants','subscription_plans','subscriptions','users','roles','permissions','branches','customers','customer_sites','customer_assets','leads','services','service_requests','surveys','quotations','quotation_items','jobs','job_technicians','job_work_logs','job_photos','job_materials','technicians','skills','warehouses','items','stock_balances','stock_movements','vendors','purchase_requests','purchase_orders','goods_receipts','invoices','invoice_items','payments','contracts','contract_assets','maintenance_schedules','warranties','notifications','audit_logs','api_tokens','webhooks'];foreach($required as $t)if(!in_array($t,$tables,true))$errors[]='Missing required table '.$t;
+if(!is_file(BASE_PATH.'/public/index.php'))$errors[]='Missing public/index.php';if(!is_file(BASE_PATH.'/routes/web.php'))$errors[]='Missing routes/web.php';
+echo 'PHP files checked: '.count($phpFiles)."\n";echo 'Schema tables: '.count($tables)."\n";if($errors){foreach($errors as $e)echo "[FAIL] {$e}\n";exit(1);}echo "[PASS] Static package checks passed.\n";

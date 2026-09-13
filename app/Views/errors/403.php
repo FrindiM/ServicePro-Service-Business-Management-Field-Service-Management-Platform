@@ -1,0 +1,1 @@
+<!doctype html><html><body style="font-family:system-ui;padding:60px"><h1>403</h1><p>You do not have permission to access this resource.</p><a href="javascript:history.back()">Go back</a></body></html>
